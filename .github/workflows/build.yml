@@ -103,7 +103,7 @@ jobs:
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/v') && vars.SIGNPATH_ORGANIZATION_ID != ''
     permissions:
-      contents: write   # needed to attach signed artifacts to the release
+      contents: read
       id-token: write
 
     steps:
@@ -119,9 +119,56 @@ jobs:
           wait-for-completion: true
           output-artifact-directory: signed
 
-      - name: Publish signed release
+      - name: Upload signed artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugandpray-signed
+          path: signed/**
+          if-no-files-found: error
+
+  # ---------------------------------------------------------------------------
+  # Publish a GitHub Release for any v* tag.
+  #
+  # Runs whether or not signing is configured, so an unsigned release can be cut
+  # today. `always()` is required because `sign` is skipped when SignPath is not
+  # set up, and a skipped dependency would otherwise skip this job too. It prefers
+  # signed artifacts and falls back to unsigned.
+  # ---------------------------------------------------------------------------
+  release:
+    needs: [build, sign]
+    if: always() && startsWith(github.ref, 'refs/tags/v') && needs.build.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download signed artifacts (if signing ran)
+        if: needs.sign.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: plugandpray-signed
+          path: release
+
+      - name: Download unsigned artifacts (fallback)
+        if: needs.sign.result != 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: plugandpray-unsigned
+          path: release
+
+      - name: Note signing status
+        run: |
+          if [ "${{ needs.sign.result }}" = "success" ]; then
+            echo "SIGNED=true" >> $GITHUB_ENV
+          else
+            echo "SIGNED=false" >> $GITHUB_ENV
+            echo "::warning::Release artifacts are UNSIGNED (SignPath not configured yet)."
+          fi
+          ls -lh release
+
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          files: signed/**
-          draft: true       # review before it goes public
+          files: release/**
+          draft: true            # review before it goes public
           generate_release_notes: true

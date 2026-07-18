@@ -541,11 +541,31 @@ secret `SIGNPATH_API_TOKEN`); it runs only on `v*` tags and drafts a release.
 locally and on a runner. Throwaway `*-test.cmd` scaffolding deleted (hardcoded paths,
 superseded by `fcfix fix|undo`).
 
-### Repo state
-Initial commit STAGED but NOT committed (29 files, no binaries). Needs `git config`
-identity set first. `gh` CLI is installed and authenticated on this machine.
-**The workflow itself is untested** (cannot run GitHub Actions locally) so expect a
-round or two of iteration on first push.
+### PUBLISHED + CI GREEN (2026-07-18)
+**https://github.com/humanzee-lab/plug-and-pray** (public, GPL-3.0 detected).
+Initial commit `95ce9eb`, 25 files, no binaries in tree.
+
+**CI passed on the FIRST run** (2m14s), including building libwdi from source on a clean
+runner. Smoke test output confirms `libwdi.dll 3.7 MB x64` and
+`WinUSB installable by this engine: True`, so WDK_DIR really was applied on the runner.
+The `sign` job correctly skipped itself (no tag, no SignPath vars).
+
+Gotcha: `gh repo create --source=.` pushed to **`master`**, but the workflow triggers on
+`main`, so CI would never have fired. Renamed with `git branch -M main`, pushed, set the
+default branch, deleted the remote `master`.
+
+Known warning (non-blocking): the marketplace actions we use still target Node 20 and are
+being force-run on Node 24. Bump action versions when upstream ships Node 24 builds.
+
+Pre-publish scrub done: no personal identifiers, no `C:\Dev` paths, internal "Tom" voice
+removed from NOTES.md, `dist-cli/` (36 MB) caught before it was committed, throwaway
+`*-test.cmd` scripts deleted, superseded WinForms project removed.
+
+### NEXT: apply to SignPath Foundation
+Their terms require the project to be **already released in the form to be signed**, so
+cut a `v0.1.0` GitHub release (unsigned) FIRST, then apply. On approval set repo vars
+`SIGNPATH_ORGANIZATION_ID` / `SIGNPATH_PROJECT_SLUG` / `SIGNPATH_SIGNING_POLICY_SLUG`
+and secret `SIGNPATH_API_TOKEN`, and the existing `sign` job activates on the next tag.
 
 ## Open decisions
 
