@@ -1,0 +1,26 @@
+# Build output
+bin/
+obj/
+dist/
+dist-loose/
+dist-cli/
+*.log
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+
+# libwdi is NOT vendored in-tree. scripts/Build-LibWdi.ps1 clones it at a pinned
+# upstream commit and applies our documented modifications, so the build stays
+# reproducible without copying someone else's LGPL source into a GPL repo.
+vendor/libwdi/
+
+# WDK redistributables, fetched from Microsoft at build time (~30 MB)
+vendor/wdfcoinstaller.msi
+vendor/wdk-redist/
+vendor/wdk-redist-a/
+
+# Transient driver extraction from local testing
+usb_driver/
+test-extract/

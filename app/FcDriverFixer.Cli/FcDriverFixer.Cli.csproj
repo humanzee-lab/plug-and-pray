@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Platforms>x64</Platforms>
+    <PlatformTarget>x64</PlatformTarget>
+    <AssemblyName>fcfix</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FcDriverFixer.Core\FcDriverFixer.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The native engine, copied next to the exe so P/Invoke can find it. -->
+    <None Include="..\..\vendor\libwdi\x64\Release\dll\libwdi.dll"
+          Link="libwdi.dll" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+</Project>

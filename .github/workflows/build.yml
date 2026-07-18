@@ -1,0 +1,127 @@
+# Builds Plug & Pray end to end on a clean runner, including compiling libwdi from
+# source. Two reasons this matters beyond convenience:
+#   1. SignPath Foundation (our free code signing) will only sign CI-built artifacts.
+#      Locally built binaries cannot be signed at all.
+#   2. It removes the single point of failure that killed the tool we are replacing:
+#      anyone can rebuild this without the original author's machine.
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      # Puts MSBuild on PATH. Build-LibWdi.ps1 prefers PATH and only falls back to
+      # hunting through vswhere, so this keeps the libwdi build fast and predictable.
+      - uses: microsoft/setup-msbuild@v2
+
+      # The WDK coinstaller MSI is ~30 MB and comes from Microsoft's CDN. Cache it so
+      # we are not re-downloading it on every run (and so a CDN blip is not a red build).
+      - name: Cache WDK coinstaller MSI
+        uses: actions/cache@v4
+        with:
+          path: vendor/wdfcoinstaller.msi
+          key: wdk-coinstaller-msi-v1
+
+      # Compiles libwdi from a pinned upstream commit, applying the five fixes it needs
+      # to build on a modern toolchain. See scripts/Build-LibWdi.ps1 and NOTES.md.
+      - name: Build libwdi from source
+        shell: pwsh
+        run: ./scripts/Build-LibWdi.ps1
+
+      - name: Build and test the app
+        shell: pwsh
+        run: |
+          dotnet build app/FcDriverFixer.sln -c Release --nologo
+
+          # Locate the CLI rather than hardcoding a path: a *solution* build inserts the
+          # platform into the output path (bin/x64/Release/...), while a single-project
+          # build does not (bin/Release/...).
+          $cli = Get-ChildItem app/FcDriverFixer.Cli/bin -Recurse -Filter fcfix.exe |
+                 Where-Object { $_.FullName -like '*Release*' } |
+                 Select-Object -First 1 -ExpandProperty FullName
+          if (-not $cli) { throw "fcfix.exe not found after build" }
+
+          # Smoke test the real native engine. If libwdi failed to load, or the P/Invoke
+          # struct layout is wrong, this fails here rather than in a pilot's hands.
+          # Note: the runner has no flight controller attached, so we assert that the
+          # engine initialises and reports WinUSB support, not that a device is present.
+          $out = & $cli list
+          if ($LASTEXITCODE -ne 0) { throw "fcfix smoke test failed ($LASTEXITCODE)" }
+          $out
+
+          # Join to a single string first. Against a string ARRAY, -notmatch is a
+          # filter that returns the non-matching elements (truthy), not a boolean,
+          # so testing the array directly would fail even when the text is present.
+          $outText = $out -join "`n"
+          if ($outText -notmatch 'WinUSB installable by this engine:\s*True') {
+              throw "libwdi built without WinUSB support (WDK_DIR was not applied correctly)"
+          }
+
+      - name: Publish release artifacts
+        shell: pwsh
+        run: ./scripts/publish.ps1
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugandpray-unsigned
+          path: |
+            dist/PlugAndPray.exe
+            dist/PlugAndPray-replaceable-libwdi.zip
+          if-no-files-found: error
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------
+  # Code signing via SignPath Foundation (free for OSS).
+  #
+  # Inert until configured. To turn it on, set these on the repository:
+  #   variables: SIGNPATH_ORGANIZATION_ID, SIGNPATH_PROJECT_SLUG,
+  #              SIGNPATH_SIGNING_POLICY_SLUG
+  #   secret:    SIGNPATH_API_TOKEN
+  # SignPath verifies the build originated from this workflow in this repo, so the
+  # signature also proves the binary was built from the public source.
+  # ---------------------------------------------------------------------------
+  sign:
+    needs: build
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v') && vars.SIGNPATH_ORGANIZATION_ID != ''
+    permissions:
+      contents: write   # needed to attach signed artifacts to the release
+      id-token: write
+
+    steps:
+      - name: Submit signing request to SignPath
+        id: signpath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-name: plugandpray-unsigned
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Publish signed release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: signed/**
+          draft: true       # review before it goes public
+          generate_release_notes: true
