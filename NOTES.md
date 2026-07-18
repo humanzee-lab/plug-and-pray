@@ -561,6 +561,20 @@ Pre-publish scrub done: no personal identifiers, no `C:\Dev` paths, internal "To
 removed from NOTES.md, `dist-cli/` (36 MB) caught before it was committed, throwaway
 `*-test.cmd` scripts deleted, superseded WinForms project removed.
 
+### v0.1.0 RELEASED (2026-07-18)
+https://github.com/humanzee-lab/plug-and-pray/releases/tag/v0.1.0 (public, not a draft)
+Assets: `PlugAndPray.exe` 71.0 MB + `PlugAndPray-replaceable-libwdi.zip` 71.5 MB, both
+built by CI on a clean runner.
+
+Workflow gap found and fixed first: the release step lived INSIDE the signing job, so a
+tag would have built artifacts but produced no GitHub Release at all. Now split into a
+dedicated `release` job that runs on any `v*` tag, prefers signed artifacts and falls
+back to unsigned with a log warning. It needs `if: always()` because a skipped `sign`
+job would otherwise skip the release too.
+
+Release notes deliberately lead with the two things a first-time user must know: the
+SmartScreen warning (unsigned) and the certificate the tool installs and removes.
+
 ### NEXT: apply to SignPath Foundation
 Their terms require the project to be **already released in the form to be signed**, so
 cut a `v0.1.0` GitHub release (unsigned) FIRST, then apply. On approval set repo vars
