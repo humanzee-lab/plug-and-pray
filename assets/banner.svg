@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.35" y2="1">
+      <stop offset="0" stop-color="#0B111B"/>
+      <stop offset="1" stop-color="#131C2B"/>
+    </linearGradient>
+
+    <!-- cyan bloom behind the quad -->
+    <radialGradient id="bloom" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"   stop-color="#38BDF8" stop-opacity="0.30"/>
+      <stop offset="0.6" stop-color="#38BDF8" stop-opacity="0.07"/>
+      <stop offset="1"   stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- spinning prop disc -->
+    <radialGradient id="prop" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"    stop-color="#38BDF8" stop-opacity="0.05"/>
+      <stop offset="0.72" stop-color="#38BDF8" stop-opacity="0.16"/>
+      <stop offset="0.94" stop-color="#7DD3FC" stop-opacity="0.42"/>
+      <stop offset="1"    stop-color="#7DD3FC" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#48566B"/>
+      <stop offset="1" stop-color="#2C3849"/>
+    </linearGradient>
+
+    <filter id="haloGlow" x="-60%" y="-300%" width="220%" height="700%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <filter id="cableGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- one prop assembly, reused at each motor -->
+    <g id="rotor">
+      <circle r="58" fill="url(#prop)"/>
+      <g stroke="#7DD3FC" stroke-opacity="0.5" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M -52 -14 A 54 54 0 0 1 -14 -52"/>
+        <path d="M  52  14 A 54 54 0 0 1  14  52"/>
+      </g>
+      <circle r="19" fill="#1B2534" stroke="#5B6B82" stroke-width="3"/>
+      <circle r="7"  fill="#38BDF8"/>
+    </g>
+  </defs>
+
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <ellipse cx="945" cy="330" rx="330" ry="300" fill="url(#bloom)"/>
+
+  <!-- ================= wordmark ================= -->
+  <text x="88" y="286" font-size="92" font-weight="800" letter-spacing="-2" fill="#F2F7FD">PLUG <tspan fill="#38BDF8">&amp;</tspan> PRAY</text>
+
+  <text x="92" y="344" font-size="26" fill="#94A3B6">Fixes the USB driver that stops Betaflight</text>
+  <text x="92" y="380" font-size="26" fill="#94A3B6">from flashing your flight controller.</text>
+
+  <!-- rule + credentials -->
+  <rect x="92" y="424" width="60" height="3" rx="1.5" fill="#38BDF8"/>
+  <text x="92" y="474" font-size="19" fill="#64748B" letter-spacing="0.6">One button &#183; Fully reversible &#183; Works offline</text>
+  <text x="92" y="506" font-size="19" fill="#64748B" letter-spacing="0.6">Open source, GPLv3 &#183; Windows 10 and 11</text>
+
+  <!-- ================= the halo (the "pray" half of the joke) ================= -->
+  <g filter="url(#haloGlow)">
+    <ellipse cx="945" cy="152" rx="78" ry="17" fill="none" stroke="#FBBF24" stroke-width="7" stroke-opacity="0.95"/>
+  </g>
+
+  <!-- ================= USB cable feeding the quad ================= -->
+  <g filter="url(#cableGlow)">
+    <path d="M 612 566 C 700 566 690 470 762 420 C 812 385 856 355 892 336"
+          fill="none" stroke="#38BDF8" stroke-width="9" stroke-linecap="round" stroke-opacity="0.9"/>
+  </g>
+  <!-- USB type-A plug -->
+  <g transform="translate(612 566) rotate(-14)">
+    <rect x="-64" y="-19" width="46" height="38" rx="5" fill="#2C3849" stroke="#5B6B82" stroke-width="3"/>
+    <rect x="-20" y="-13" width="22" height="26" rx="3" fill="#8896AB"/>
+    <rect x="-56" y="-9"  width="12" height="7"  rx="2" fill="#8896AB"/>
+    <rect x="-56" y="2"   width="12" height="7"  rx="2" fill="#8896AB"/>
+  </g>
+
+  <!-- ================= the quad ================= -->
+  <g>
+    <!-- arms -->
+    <g stroke="url(#arm)" stroke-width="26" stroke-linecap="round">
+      <line x1="945" y1="330" x2="853" y2="238"/>
+      <line x1="945" y1="330" x2="1037" y2="238"/>
+      <line x1="945" y1="330" x2="853" y2="422"/>
+      <line x1="945" y1="330" x2="1037" y2="422"/>
+    </g>
+
+    <!-- rotors -->
+    <use href="#rotor" x="853"  y="238"/>
+    <use href="#rotor" x="1037" y="238"/>
+    <use href="#rotor" x="853"  y="422"/>
+    <use href="#rotor" x="1037" y="422"/>
+
+    <!-- body / stack -->
+    <rect x="897" y="282" width="96" height="96" rx="16" fill="#212C3D" stroke="#5B6B82" stroke-width="3"/>
+    <rect x="913" y="298" width="64" height="64" rx="9" fill="#16202E" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.75"/>
+    <!-- flight controller detail -->
+    <rect x="928" y="316" width="34" height="22" rx="3" fill="#38BDF8" fill-opacity="0.85"/>
+    <circle cx="922" cy="352" r="3.5" fill="#34D399"/>
+    <circle cx="934" cy="352" r="3.5" fill="#FBBF24"/>
+    <!-- USB socket the cable enters -->
+    <rect x="885" y="320" width="16" height="22" rx="4" fill="#0E1725" stroke="#5B6B82" stroke-width="2.5"/>
+  </g>
+</svg>

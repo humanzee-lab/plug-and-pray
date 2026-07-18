@@ -1,3 +1,5 @@
+<img src="assets/banner.png" alt="Plug &amp; Pray" width="100%">
+
 # Plug & Pray
 
 **Fixes the Windows USB driver that stops Betaflight Configurator from flashing your flight controller.**

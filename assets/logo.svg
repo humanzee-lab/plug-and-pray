@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.4" y2="1">
+      <stop offset="0" stop-color="#0B111B"/>
+      <stop offset="1" stop-color="#15202F"/>
+    </linearGradient>
+
+    <radialGradient id="bloom" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"   stop-color="#38BDF8" stop-opacity="0.26"/>
+      <stop offset="0.65" stop-color="#38BDF8" stop-opacity="0.06"/>
+      <stop offset="1"   stop-color="#38BDF8" stop-opacity="0"/>
+    </radialGradient>
+
+    <radialGradient id="prop" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0"    stop-color="#38BDF8" stop-opacity="0.05"/>
+      <stop offset="0.72" stop-color="#38BDF8" stop-opacity="0.18"/>
+      <stop offset="0.94" stop-color="#7DD3FC" stop-opacity="0.46"/>
+      <stop offset="1"    stop-color="#7DD3FC" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="arm" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#54637A"/>
+      <stop offset="1" stop-color="#324052"/>
+    </linearGradient>
+
+    <filter id="glow" x="-70%" y="-300%" width="240%" height="700%">
+      <feGaussianBlur stdDeviation="6" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <g id="rotor">
+      <circle r="52" fill="url(#prop)"/>
+      <g stroke="#7DD3FC" stroke-opacity="0.5" stroke-width="3" fill="none" stroke-linecap="round">
+        <path d="M -47 -13 A 48 48 0 0 1 -13 -47"/>
+        <path d="M  47  13 A 48 48 0 0 1  13  47"/>
+      </g>
+      <circle r="17" fill="#1B2534" stroke="#5F7089" stroke-width="3"/>
+      <circle r="6.5" fill="#38BDF8"/>
+    </g>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <circle cx="256" cy="272" r="215" fill="url(#bloom)"/>
+
+  <!-- halo -->
+  <g filter="url(#glow)">
+    <ellipse cx="256" cy="104" rx="66" ry="15" fill="none" stroke="#FBBF24" stroke-width="7"/>
+  </g>
+
+  <!-- Cable in from lower left. Routed up the OUTSIDE of the lower-left rotor
+       (which spans x 124..228) so it stays visible instead of disappearing behind
+       the prop disc, then turns in to meet the USB socket on the body. -->
+  <g filter="url(#glow)">
+    <path d="M 74 460 C 112 438 92 338 106 298 C 120 264 164 258 202 268"
+          fill="none" stroke="#38BDF8" stroke-width="9" stroke-linecap="round" stroke-opacity="0.9"/>
+  </g>
+
+  <!-- quad -->
+  <g stroke="url(#arm)" stroke-width="24" stroke-linecap="round">
+    <line x1="256" y1="272" x2="176" y2="192"/>
+    <line x1="256" y1="272" x2="336" y2="192"/>
+    <line x1="256" y1="272" x2="176" y2="352"/>
+    <line x1="256" y1="272" x2="336" y2="352"/>
+  </g>
+
+  <use href="#rotor" x="176" y="192"/>
+  <use href="#rotor" x="336" y="192"/>
+  <use href="#rotor" x="176" y="352"/>
+  <use href="#rotor" x="336" y="352"/>
+
+  <rect x="214" y="230" width="84" height="84" rx="14" fill="#212C3D" stroke="#5F7089" stroke-width="3"/>
+  <rect x="228" y="244" width="56" height="56" rx="8" fill="#16202E" stroke="#38BDF8" stroke-width="2.5" stroke-opacity="0.75"/>
+  <rect x="241" y="260" width="30" height="19" rx="3" fill="#38BDF8" fill-opacity="0.85"/>
+  <circle cx="236" cy="292" r="3.2" fill="#34D399"/>
+  <circle cx="247" cy="292" r="3.2" fill="#FBBF24"/>
+  <rect x="203" y="262" width="14" height="20" rx="4" fill="#0E1725" stroke="#5F7089" stroke-width="2.5"/>
+</svg>
