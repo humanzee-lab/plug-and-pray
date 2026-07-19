@@ -581,6 +581,40 @@ cut a `v0.1.0` GitHub release (unsigned) FIRST, then apply. On approval set repo
 `SIGNPATH_ORGANIZATION_ID` / `SIGNPATH_PROJECT_SLUG` / `SIGNPATH_SIGNING_POLICY_SLUG`
 and secret `SIGNPATH_API_TOKEN`, and the existing `sign` job activates on the next tag.
 
+## BUG: stale COM port on any PC with more than one board (fixed 2026-07-19)
+
+Found the moment a SECOND flight controller was plugged in. Exactly the class of bug a
+single test board can never reveal.
+
+**Symptom:** app reported the board on COM6 and the fix failed. Windows had it on COM8.
+
+**Cause:** `ComPortLocator.Find()` walked
+`HKLM\SYSTEM\CurrentControlSet\Enum\USB\VID_0483&PID_5740` and returned the FIRST
+subkey with a `PortName`. That key holds one instance for every device that has ever been
+plugged in, each remembering its own port:
+
+```
+204639455333 -> COM6   (previous board, unplugged)
+334E396B3230 -> COM8   (board actually connected)
+```
+
+So it returned a stale port belonging to a disconnected board, and the MSP reboot went to
+a port that does not exist.
+
+**Impact: would have broken for most users.** Any pilot who has ever connected two STM32
+flight controllers to the same PC, which is close to all of them.
+
+**Fix:** intersect the registry candidates with `SerialPort.GetPortNames()`, which only
+returns live ports, and return null when nothing matches. Returning null is deliberate:
+the caller then tells the user to use the BOOT button, which is far better than sending a
+reboot command to the wrong port.
+
+Verified: now reports COM8, full kick + install + verify passes on the second board
+(instance `200364500000`, `Service=WinUSB`, `DriverDesc=Plug & Pray (WinUSB)`).
+
+**Lesson for the test matrix:** anything derived from the PnP registry must be filtered
+for presence. The registry is a history, not a description of what is plugged in now.
+
 ## Open decisions
 
 - App licence (MIT vs GPLv3) — free choice as long as we only *link* libwdi

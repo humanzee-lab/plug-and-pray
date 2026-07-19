@@ -151,11 +151,28 @@ public static class Diagnoser
 /// </summary>
 public static class ComPortLocator
 {
+    /// <summary>
+    /// Returns the COM port of a *currently connected* board.
+    ///
+    /// The registry keeps an instance per device that has EVER been plugged in, each with
+    /// its own remembered PortName. A pilot with two quads therefore has several entries
+    /// under the same VID/PID, most of them stale. Returning the first match would hand
+    /// back a port belonging to a board that is not plugged in, and the reboot-to-
+    /// bootloader command would then be sent to a port that does not exist.
+    ///
+    /// So we intersect the registry candidates with the ports Windows reports as live.
+    /// Returning null when nothing matches is deliberate and much safer than guessing:
+    /// the caller falls back to telling the user to use the BOOT button.
+    /// </summary>
     public static string? Find(ushort vid, ushort pid)
     {
         string prefix = $"VID_{vid:X4}&PID_{pid:X4}";
         try
         {
+            var live = new HashSet<string>(
+                System.IO.Ports.SerialPort.GetPortNames(), StringComparer.OrdinalIgnoreCase);
+            if (live.Count == 0) return null;
+
             using RegistryKey? usb = Registry.LocalMachine.OpenSubKey(
                 $@"SYSTEM\CurrentControlSet\Enum\USB\{prefix}");
             if (usb is null) return null;
@@ -163,7 +180,7 @@ public static class ComPortLocator
             foreach (string instance in usb.GetSubKeyNames())
             {
                 using RegistryKey? dp = usb.OpenSubKey($@"{instance}\Device Parameters");
-                if (dp?.GetValue("PortName") is string port && port.StartsWith("COM"))
+                if (dp?.GetValue("PortName") is string port && live.Contains(port))
                     return port;
             }
         }
