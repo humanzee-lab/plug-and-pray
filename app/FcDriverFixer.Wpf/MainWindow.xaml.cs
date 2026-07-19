@@ -62,11 +62,13 @@ public partial class MainWindow : Window
         return arg["--preview:".Length..].ToLowerInvariant() switch
         {
             "working" or "normalmode" => new DiagnosisResult(FcState.NormalMode,
-                "Your board is connected on COM6.",
+                "Your board is connected on COM8.",
                 "It's running normally and Betaflight can read its settings. To flash new firmware " +
                 "it needs to switch to bootloader (DFU) mode — click below and I'll do that and " +
                 "install the flashing driver.",
-                "Prepare for flashing", FixAction.PrepareAndFix, null, FixAction.None, null, "COM6"),
+                "Prepare for flashing", FixAction.PrepareAndFix, null, FixAction.None, null, "COM8",
+                new FcInfo("Betaflight", "25.12.5", "STM32H743", "IFLIGHT_H743_AIO_V2",
+                           "IFRC", "Jul 14 2026", null)),
 
             "dfuneedsfix" => new DiagnosisResult(FcState.DfuNeedsFix,
                 "Your board is in DFU mode with the wrong driver.",
@@ -190,6 +192,21 @@ public partial class MainWindow : Window
 
         Headline.Text = r.Headline;
         Detail.Text = r.Detail;
+
+        // Show what the board says it is running. Useful on its own, and it is exactly
+        // what someone needs to quote when asking for help on a forum.
+        string? fw = r.Firmware?.Summary;
+        if (fw is not null)
+        {
+            var line = new System.Text.StringBuilder(fw);
+            if (r.Firmware?.CraftName is { } craft) line.Append("\n“").Append(craft).Append('”');
+            FirmwareText.Text = line.ToString();
+            FirmwarePanel.Visibility = Visibility.Visible;
+        }
+        else
+        {
+            FirmwarePanel.Visibility = Visibility.Collapsed;
+        }
 
         bool hasPrimary = !string.IsNullOrEmpty(r.ActionLabel);
         PrimaryBtn.Visibility = hasPrimary ? Visibility.Visible : Visibility.Collapsed;

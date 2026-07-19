@@ -67,6 +67,13 @@ void Diagnose()
     Console.WriteLine($"Headline: {r.Headline}");
     Console.WriteLine($"Detail  : {r.Detail}");
     if (r.ComPort is not null) Console.WriteLine($"COM port: {r.ComPort}");
+    if (r.Firmware is { } fw)
+    {
+        Console.WriteLine($"Firmware: {fw.Summary}");
+        if (fw.Manufacturer is not null) Console.WriteLine($"Made by : {fw.Manufacturer}");
+        if (fw.Built is not null) Console.WriteLine($"Built   : {fw.Built}");
+        if (fw.CraftName is not null) Console.WriteLine($"Craft   : {fw.CraftName}");
+    }
     if (!string.IsNullOrEmpty(r.ActionLabel)) Console.WriteLine($"Action  : [{r.ActionLabel}] ({r.Action})");
     if (!string.IsNullOrEmpty(r.SecondaryLabel)) Console.WriteLine($"Also    : [{r.SecondaryLabel}] ({r.SecondaryAction})");
 }

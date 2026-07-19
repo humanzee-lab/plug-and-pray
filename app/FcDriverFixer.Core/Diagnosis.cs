@@ -35,7 +35,8 @@ public sealed record DiagnosisResult(
     string ActionLabel, FixAction Action,           // primary action ("" = none)
     string? SecondaryLabel, FixAction SecondaryAction, // optional secondary (e.g. Undo)
     LibWdi.UsbDevice? Target,
-    string? ComPort);
+    string? ComPort,
+    FcInfo? Firmware = null);   // what the board says it is running, when it will tell us
 
 public static class Diagnoser
 {
@@ -108,16 +109,25 @@ public static class Diagnoser
             }
 
             string? com = ComPortLocator.Find(vcpDev.Vid, vcpDev.Pid);
+
+            // Ask the board what it is running. We are about to open this port anyway to
+            // reboot it, so the extra round trip is nearly free, and it turns a healthy
+            // board from "nothing to do" into something informative. Never fatal: a null
+            // just means the port is busy (Configurator open) or it does not speak MSP.
+            FcInfo? fw = com is null ? null : FcInfoReader.Read(com);
+
+            string detail = "It's running normally and Betaflight can read its settings. " +
+                "To flash new firmware it needs to switch to bootloader (DFU) mode — " +
+                "click below and I'll do that and install the flashing driver.";
+
             return new DiagnosisResult(
                 FcState.NormalMode,
                 com is null ? "Your board is connected and healthy."
                             : $"Your board is connected on {com}.",
-                "It's running normally and Betaflight can read its settings. " +
-                "To flash new firmware it needs to switch to bootloader (DFU) mode — " +
-                "click below and I'll do that and install the flashing driver.",
+                detail,
                 ActionLabel: "Prepare for flashing", Action: FixAction.PrepareAndFix,
                 SecondaryLabel: null, SecondaryAction: FixAction.None,
-                Target: vcpDev, ComPort: com);
+                Target: vcpDev, ComPort: com, Firmware: fw);
         }
 
         if (bridge is { } bridgeDev)

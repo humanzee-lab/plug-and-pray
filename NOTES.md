@@ -615,6 +615,39 @@ Verified: now reports COM8, full kick + install + verify passes on the second bo
 **Lesson for the test matrix:** anything derived from the PnP registry must be filtered
 for presence. The registry is a history, not a description of what is plugged in now.
 
+## LANDMINE: asserting DTR wedges the serial port (2026-07-19)
+
+Adding firmware detection (MSP query on the diagnosis path) initially set
+`DtrEnable = true`, copying what terminal software does. On an STM32 VCP this left the
+port permanently unopenable: `Access to the path 'COM8' is denied`, with **no process
+holding it**. It survived `pnputil /restart-device` (returned 3010, reboot required).
+**Only a physical replug cleared it.**
+
+The comparison is what identified it:
+- `BootloaderKick` has opened that same port dozens of times with **no DTR**, never wedged
+- `FcInfoReader` set DTR and wedged it on the first attempt
+- The throwaway PowerShell prototype also set DTR, worked once, then wedged
+
+**Do not set DtrEnable on these ports.** MSP answers perfectly well without it (verified
+five consecutive reads, port still openable afterwards, and the full kick+install flow
+still passes).
+
+**Why this was nearly serious:** diagnosis runs on launch and after every action, so a
+port-wedging bug there would have become near-certain in normal use, and it would have
+broken the reboot-to-bootloader step the whole tool depends on. A cosmetic feature was one
+line away from disabling the primary function.
+
+General rule, now twice-learned: reading Windows' *records* is safe and idempotent;
+opening a *device* is an interaction with hardware that can leave state behind.
+
+### Also: the throwaway prototype reported WRONG data
+The quick PowerShell version reported "Betaflight 4.5.1, built Oct 2 2024, STM32H743".
+The proper implementation reads the same board as **Betaflight 25.12.5, IFLIGHT_H743_AIO_V2,
+IFRC, built Jul 14 2026**, consistently across repeated runs. The prototype's frame
+matching was too naive and it mis-parsed `MSP_BOARD_INFO`, which is a fixed header
+followed by three length-prefixed strings (target name, board name, manufacturer id), not
+a single name at a fixed offset.
+
 ## Open decisions
 
 - App licence (MIT vs GPLv3) — free choice as long as we only *link* libwdi

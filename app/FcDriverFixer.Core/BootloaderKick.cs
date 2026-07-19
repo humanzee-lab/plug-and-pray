@@ -12,20 +12,14 @@ namespace FcDriverFixer.Core;
 /// </summary>
 public static class BootloaderKick
 {
-    private const byte MSP_SET_REBOOT = 0x44;              // 68
-    private const byte MSP_REBOOT_BOOTLOADER_ROM = 0x01;
-
     /// <summary>
     /// Send the reboot-to-bootloader command. Tries MSP first (deterministic on
     /// Betaflight 4.x), then falls back to the CLI "bl" command for older firmware.
     /// </summary>
     public static void Send(string portName, int baud = 115200)
     {
-        // MSP v1 frame:  '$' 'M' '<' <size> <cmd> <data...> <crc>
-        // crc = XOR of size, cmd and every data byte.
-        byte size = 0x01;
-        byte crc = (byte)(size ^ MSP_SET_REBOOT ^ MSP_REBOOT_BOOTLOADER_ROM);
-        byte[] mspFrame = { 0x24, 0x4D, 0x3C, size, MSP_SET_REBOOT, MSP_REBOOT_BOOTLOADER_ROM, crc };
+        // Framing lives in Msp so there is only one implementation of it.
+        byte[] mspFrame = Msp.BuildRequest(Msp.SetReboot, Msp.RebootToBootloaderRom);
 
         using var port = new SerialPort(portName, baud, Parity.None, 8, StopBits.One)
         {
